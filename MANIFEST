@@ -1,0 +1,5 @@
+Makefile.PL
+MANIFEST
+README
+t/Lazy-Lockfile.t
+lib/Lazy/Lockfile.pm
