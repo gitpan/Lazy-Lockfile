@@ -6,7 +6,7 @@ use POSIX qw/ :errno_h /;
 use File::Basename;
 
 use vars qw( $VERSION );
-( $VERSION ) = '$Revision: 1.16 $' =~ /^.Revision: ([\d\.]+)/;
+( $VERSION ) = '$Revision: 1.17 $' =~ /^.Revision: ([\d\.]+)/;
 
 =head1 NAME
 
@@ -211,40 +211,49 @@ Lazy::Lockfile object, the lock will be freed when garbage collection is run,
 which is not guaranteed to happen until the program exits (though it will
 likely happen immediately).
 
+Returns a true value if the lockfile was found and removed, false otherwise.
+
 =cut
 
 sub unlock {
     my ( $self ) = @_;
-    $self->DESTROY;
+    my $retval = $self->DESTROY;
     $self->delete_on_destroy(0);
+    return $retval;
 }
 
 # Make sure the lockfile contains our pid before we delete it...
 # do we need this?
 sub DESTROY {
     my ( $self ) = @_;
+    my $retval = 0;
     if ( ( $self ) && ( $self->{'lockfile_location'} ) && ( $self->{'delete_on_destroy'} ) ) {
         my ( $lock, $file_pid );
         my $lock_tries = 0;
-        open( $lock, '<', $self->{'lockfile_location'} ) || return;
+        open( $lock, '<', $self->{'lockfile_location'} ) || return 0;
         while ( $lock_tries++ < 5 ) {
             if ( flock( $lock, LOCK_NB | LOCK_EX ) ) {
                 last;
             }
             sleep( 1 );
         }
-        if ( $lock_tries > 5 ) { close( $lock ); return; }
+        if ( $lock_tries > 5 ) { close( $lock ); return 0; }
         seek( $lock, 0, 0 );
         $file_pid = <$lock>;
         chomp( $file_pid ) if defined $file_pid;
         if ( ( defined $file_pid ) && ( ( $file_pid == 0 ) || ( $file_pid == $$ ) ) ) {
-            unlink $self->{'lockfile_location'};
+            $retval = unlink $self->{'lockfile_location'};
         }
         close( $lock );
     }
+    return $retval;
 }
 
 =head1 CHANGES
+
+=head2 2010-06-22, 1.17 - jeagle
+
+Update L<unlock> to return a useful status.
 
 =head2 2010-06-22, 1.16 - jeagle
 

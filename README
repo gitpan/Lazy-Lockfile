@@ -92,7 +92,13 @@ METHODS
     garbage collection is run, which is not guaranteed to happen until the
     program exits (though it will likely happen immediately).
 
+    Returns a true value if the lockfile was found and removed, false
+    otherwise.
+
 CHANGES
+  2010-06-22, 1.17 - jeagle
+    Update unlock to return a useful status.
+
   2010-06-22, 1.16 - jeagle
     Version bumps for migration to CPAN.
 
