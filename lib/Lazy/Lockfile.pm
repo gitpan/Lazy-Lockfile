@@ -6,11 +6,11 @@ use POSIX qw/ :errno_h /;
 use File::Basename;
 
 use vars qw( $VERSION );
-( $VERSION ) = '$Revision: 1.17 $' =~ /^.Revision: ([\d\.]+)/;
+( $VERSION ) = '1.18';
 
 =head1 NAME
 
-Lazy::Lockfile - File locking for the lazy.
+Lazy::Lockfile - File based locking for the lazy.
 
 =head1 SYNOPSIS
 
@@ -22,22 +22,34 @@ Lazy::Lockfile - File locking for the lazy.
 
 =head1 DESCRIPTION
 
-Lazy::Lockfile is a module designed for simple locking, requiring very little
-of the user. Once the object is instanced, the lock will be held as long as
-object is in scope. When the object is destroyed, the lock is released.
+Lazy::Lockfile is a module designed for simple locking through the use of
+lockfiles, requiring very little effort on the part of the developer. Once the
+object is instanced, the lock will be held as long as object exists. When the
+object is destroyed, the lock is released.
 
-Lazy::Lockfile is smart enough to detect stale lockfiles from PIDs no longer
-on the system.
+Locks are based around the existence of a named file, not around the use of
+L<flock> (though flock is used to synchronize access to the lock file). 
+Lazy::Lockfile is (usually) smart enough to detect stale lockfiles from PIDs no
+longer running by placing the PID of the process holding the lock inside the
+lockfile.
 
 =head1 NOTES
 
 Lazy::Lockfile is not safe for use on NFS volumes.
 
-When not using the L<no_pid> option, Lazy::Lockfile is unable to detect a
-process running as a user different than the current process (unless the
-current process is running as root). This is due to the way in which
-Lazy::Lockfile checks for a running process. In this scenario, it is
-recommended that users use the L<no_pid> option.
+Lazy::Lockfile is not tested to interact correctly with other file locking
+systems when used on the same lockfile.
+
+Lazy::Lockfile uses kill (with signal zero) to determine if the lockfile is
+stale. This works on most systems running as most users but there are likely
+instances where this will fail. If this applies to your system, you can use the
+L<no_pid> option to disable the check.
+
+If Lazy::Lockfile encounters a malformed lockfile (empty, containing other
+text, etc), it will treat it as a corrupt file and overwrite it, assuming the
+lock. The author believes this behavior should be changed (and malformed files
+should be left untouched), but has kept this behavior for backwards
+compatibility.
 
 =head1 USAGE
 
@@ -66,7 +78,7 @@ I.e., the name of the program being run, with a .pid extension, in /tmp/.
 =head4 no_pid
 
 If true, instead of writing the PID file, a value of "0" is written instead.
-When read by another instance of Lazy::Lockfile attempting to aquire the lock,
+When read by another instance of Lazy::Lockfile attempting to acquire the lock,
 no PID check will be performed and the lock will be assumed to be active as
 long as the file exists. Defaults to false.
 
@@ -80,9 +92,12 @@ also C<delete_on_destroy>.
 
 =head3 Compatibility
 
-For compatability with older versions of Lazy::Lockfile (pre-1.0), a single
+For compatibility with older versions of Lazy::Lockfile (pre-1.0), a single
 optional parameter is accepted, the path to the lockfile. This parameter
 functions the same as the 'location' parameter described above.
+
+As stated above, malformed lockfiles will be overwritten, though this may be
+subject to change in a future version.
 
 =head3 Return value
 
@@ -134,26 +149,33 @@ sub new {
     if ( defined $file_pid ) {
         ( $file_pid ) = $file_pid =~ /^(\d+)/;
     }
+# Would it be better to detect the broken file and return a different error?
+#    if ( ( !defined $file_pid ) && ( $file_pid eq '' ) ) 
+#        flock( $lock, LOCK_UN );
+#        close( $lock );
+#        $! = EFTYPE;
+#        return;
+#    }
     if (
-         ( ( defined $file_pid ) && ( $file_pid ne '' ) )
-         &&
-         ( ( $file_pid == 0 ) || ( kill( 0, $file_pid ) ) )
-       ) {
+        ( ( defined $file_pid ) && ( $file_pid ne '' ) )
+        &&
+        ( ( $file_pid == 0 ) || ( kill( 0, $file_pid ) || $!{EPERM} ) )
+    ) {
         flock( $lock, LOCK_UN );
         close( $lock );
         $! = EEXIST;
         return;
-    } else {
-        seek( $lock, 0, 0 );
-        truncate( $lock, 0 );
-        if ( $params->{'no_pid'} ) {
-            print $lock "0\n";
-        } else {
-            print $lock "$$\n";
-        }
-        flock( $lock, LOCK_UN );
-        close( $lock );
     }
+
+    seek( $lock, 0, 0 );
+    truncate( $lock, 0 );
+    if ( $params->{'no_pid'} ) {
+        print $lock "0\n";
+    } else {
+        print $lock "$$\n";
+    }
+    flock( $lock, LOCK_UN );
+    close( $lock );
     bless $self, $class;
     $self->{'lockfile_location'} = $lockfile_location;
 
@@ -205,7 +227,7 @@ this has been called, delete_on_destroy will be set to false, since the lock
 has already been deleted. Once this method is called, there is not much use
 left for the object, so the user may as well delete it now.
 
-unlock should be used when the lockfile needs to be removed deterministicly
+unlock should be used when the lockfile needs to be removed deterministically
 while the program is running. If you simply remove all references to the
 Lazy::Lockfile object, the lock will be freed when garbage collection is run,
 which is not guaranteed to happen until the program exits (though it will
@@ -250,6 +272,13 @@ sub DESTROY {
 }
 
 =head1 CHANGES
+
+=head2 2011-01-04, 1.18 - jeagle
+
+Implement suggestion by srezic to check PIDs belonging to other users
+(RT#69185).
+
+Clean up documentation.
 
 =head2 2010-06-22, 1.17 - jeagle
 
@@ -306,7 +335,7 @@ names.
 
 =head2 2009-04-06, v0.1 - jeagle
 
-Inital release.
+Initial release.
 
 =cut
 

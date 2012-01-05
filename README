@@ -1,5 +1,5 @@
 NAME
-    Lazy::Lockfile - File locking for the lazy.
+    Lazy::Lockfile - File based locking for the lazy.
 
 SYNOPSIS
      use Lazy::Lockfile;
@@ -9,22 +9,33 @@ SYNOPSIS
      # Lock is released when $lockfile goes out of scope or your program exits.
 
 DESCRIPTION
-    Lazy::Lockfile is a module designed for simple locking, requiring very
-    little of the user. Once the object is instanced, the lock will be held
-    as long as object is in scope. When the object is destroyed, the lock is
-    released.
+    Lazy::Lockfile is a module designed for simple locking through the use
+    of lockfiles, requiring very little effort on the part of the developer.
+    Once the object is instanced, the lock will be held as long as object
+    exists. When the object is destroyed, the lock is released.
 
-    Lazy::Lockfile is smart enough to detect stale lockfiles from PIDs no
-    longer on the system.
+    Locks are based around the existence of a named file, not around the use
+    of flock (though flock is used to synchronize access to the lock file).
+    Lazy::Lockfile is (usually) smart enough to detect stale lockfiles from
+    PIDs no longer running by placing the PID of the process holding the
+    lock inside the lockfile.
 
 NOTES
     Lazy::Lockfile is not safe for use on NFS volumes.
 
-    When not using the no_pid option, Lazy::Lockfile is unable to detect a
-    process running as a user different than the current process (unless the
-    current process is running as root). This is due to the way in which
-    Lazy::Lockfile checks for a running process. In this scenario, it is
-    recommended that users use the no_pid option.
+    Lazy::Lockfile is not tested to interact correctly with other file
+    locking systems when used on the same lockfile.
+
+    Lazy::Lockfile uses kill (with signal zero) to determine if the lockfile
+    is stale. This works on most systems running as most users but there are
+    likely instances where this will fail. If this applies to your system,
+    you can use the no_pid option to disable the check.
+
+    If Lazy::Lockfile encounters a malformed lockfile (empty, containing
+    other text, etc), it will treat it as a corrupt file and overwrite it,
+    assuming the lock. The author believes this behavior should be changed
+    (and malformed files should be left untouched), but has kept this
+    behavior for backwards compatibility.
 
 USAGE
     All of the magic in Lazy::Lockfile is done through the constructor and
@@ -49,7 +60,7 @@ METHODS
    no_pid
     If true, instead of writing the PID file, a value of "0" is written
     instead. When read by another instance of Lazy::Lockfile attempting to
-    aquire the lock, no PID check will be performed and the lock will be
+    acquire the lock, no PID check will be performed and the lock will be
     assumed to be active as long as the file exists. Defaults to false.
 
    delete_on_destroy
@@ -60,10 +71,13 @@ METHODS
     is destroyed. See also "delete_on_destroy".
 
    Compatibility
-    For compatability with older versions of Lazy::Lockfile (pre-1.0), a
+    For compatibility with older versions of Lazy::Lockfile (pre-1.0), a
     single optional parameter is accepted, the path to the lockfile. This
     parameter functions the same as the 'location' parameter described
     above.
+
+    As stated above, malformed lockfiles will be overwritten, though this
+    may be subject to change in a future version.
 
    Return value
     If the lock can not be obtained, undef is returned (and $! will contain
@@ -87,7 +101,7 @@ METHODS
     not much use left for the object, so the user may as well delete it now.
 
     unlock should be used when the lockfile needs to be removed
-    deterministicly while the program is running. If you simply remove all
+    deterministically while the program is running. If you simply remove all
     references to the Lazy::Lockfile object, the lock will be freed when
     garbage collection is run, which is not guaranteed to happen until the
     program exits (though it will likely happen immediately).
@@ -96,6 +110,12 @@ METHODS
     otherwise.
 
 CHANGES
+  2011-01-04, 1.18 - jeagle
+    Implement suggestion by srezic to check PIDs belonging to other users
+    (RT#69185).
+
+    Clean up documentation.
+
   2010-06-22, 1.17 - jeagle
     Update unlock to return a useful status.
 
@@ -142,5 +162,5 @@ CHANGES
     file names.
 
   2009-04-06, v0.1 - jeagle
-    Inital release.
+    Initial release.
 
