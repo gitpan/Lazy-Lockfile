@@ -6,7 +6,7 @@ use POSIX qw/ :errno_h /;
 use File::Basename;
 
 use vars qw( $VERSION );
-( $VERSION ) = '1.18';
+( $VERSION ) = '1.19';
 
 =head1 NAME
 
@@ -272,6 +272,10 @@ sub DESTROY {
 }
 
 =head1 CHANGES
+
+=head2 2011-01-05, 1.19 - jeagle
+
+Change to unit tests to appease cpantesters.
 
 =head2 2011-01-04, 1.18 - jeagle
 

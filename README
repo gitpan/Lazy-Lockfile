@@ -110,6 +110,9 @@ METHODS
     otherwise.
 
 CHANGES
+  2011-01-05, 1.19 - jeagle
+    Change to unit tests to appease cpantesters.
+
   2011-01-04, 1.18 - jeagle
     Implement suggestion by srezic to check PIDs belonging to other users
     (RT#69185).

@@ -21,6 +21,6 @@ ok( !defined $lock2 );
 
 ok( $lock->unlock() );
 
-my $lock2 = Lazy::Lockfile->new();
+$lock2 = Lazy::Lockfile->new();
 ok( $lock2 );
 
