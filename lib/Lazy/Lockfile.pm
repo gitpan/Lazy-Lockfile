@@ -6,7 +6,7 @@ use POSIX qw/ :errno_h /;
 use File::Basename;
 
 use vars qw( $VERSION );
-( $VERSION ) = '1.19';
+( $VERSION ) = '1.20';
 
 =head1 NAME
 
@@ -73,7 +73,7 @@ Specifies the full path to the location of the lockfile. Defaults to:
 
  '/tmp/' . (fileparse($0))[0] . '.pid'
 
-I.e., the name of the program being run, with a .pid extension, in /tmp/.
+i.e., the name of the program being run, with a ".pid" extension, in /tmp/.
 
 =head4 no_pid
 
@@ -104,6 +104,11 @@ subject to change in a future version.
 If the lock can not be obtained, undef is returned (and $! will contain useful
 information). Otherwise, the lock is exclusive to this process, as long as the
 object exists.
+
+=head3 Example
+
+ my $lockfile = Lazy::Lockfile->new( { location => "/var/lock", no_pid => 1 } )
+     || die "Couldn't get lock!";
 
 =cut
 
@@ -272,6 +277,10 @@ sub DESTROY {
 }
 
 =head1 CHANGES
+
+=head2 2012-04-01, 1.20 - jeagle
+
+Updated documentation, thanks Alister W.
 
 =head2 2011-01-05, 1.19 - jeagle
 

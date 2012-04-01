@@ -54,7 +54,7 @@ METHODS
 
      '/tmp/' . (fileparse($0))[0] . '.pid'
 
-    I.e., the name of the program being run, with a .pid extension, in
+    i.e., the name of the program being run, with a ".pid" extension, in
     /tmp/.
 
    no_pid
@@ -84,6 +84,10 @@ METHODS
     useful information). Otherwise, the lock is exclusive to this process,
     as long as the object exists.
 
+   Example
+     my $lockfile = Lazy::Lockfile->new( { location => "/var/lock", no_pid => 1 } )
+         || die "Couldn't get lock!";
+
   name
     Returns the file name of the lockfile.
 
@@ -110,6 +114,9 @@ METHODS
     otherwise.
 
 CHANGES
+  2012-04-01, 1.20 - jeagle
+    Updated documentation, thanks Alister W.
+
   2011-01-05, 1.19 - jeagle
     Change to unit tests to appease cpantesters.
 
