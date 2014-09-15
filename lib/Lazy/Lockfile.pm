@@ -6,7 +6,7 @@ use POSIX qw/ :errno_h /;
 use File::Basename;
 
 use vars qw( $VERSION );
-( $VERSION ) = '1.20';
+( $VERSION ) = '1.21';
 
 =head1 NAME
 
@@ -277,6 +277,10 @@ sub DESTROY {
 }
 
 =head1 CHANGES
+
+=head2 2014-09-14, 1.21 - jeagle
+
+Re-package to make it easier to convert to RPM, etc.
 
 =head2 2012-04-01, 1.20 - jeagle
 
