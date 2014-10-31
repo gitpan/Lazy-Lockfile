@@ -6,7 +6,7 @@ use POSIX qw/ :errno_h /;
 use File::Basename;
 
 use vars qw( $VERSION );
-( $VERSION ) = '1.21';
+( $VERSION ) = '1.22';
 
 =head1 NAME
 
@@ -277,6 +277,10 @@ sub DESTROY {
 }
 
 =head1 CHANGES
+
+=head2 2014-10-30, 1.22 - jeagle
+
+Add missing dependency.
 
 =head2 2014-09-14, 1.21 - jeagle
 
